@@ -1,0 +1,16 @@
+{% extends "wrapper.html" %}
+
+{% block content %}
+    <h1>Main</h1>
+    <form action="" onsubmit="sendMessage(event)">
+        <input type="text" id="messageText" autocomplete="off"/>
+        <button>Send</button>
+    </form>
+    <script>
+        function sendMessage(event) {
+            var input = document.getElementById("messageText")
+            ws.send(input.value)
+            event.preventDefault()
+        }
+    </script>
+{% endblock %}

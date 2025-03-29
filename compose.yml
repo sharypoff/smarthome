@@ -1,0 +1,126 @@
+services:
+  prod:
+    profiles:
+      - prod
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        POETRY_DEV_INSTALL: "false"
+    depends_on:
+      - redis-prod
+      - postgres-prod
+    ports:
+      - "0.0.0.0:8888:8001"
+    environment:
+      - SMARTHOME_BAK_LOG_LEVEL=INFO
+      - SMARTHOME_BAK_PG_DSN=postgresql://smarthome:@postgres-prod:5432/smarthome
+      - SMARTHOME_BAK_REDIS_HOST=redis-prod
+      - SMARTHOME_BAK_REDIS_PORT=6379
+    networks:
+      - prod_net
+
+  dev:
+    profiles:
+      - dev
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        POETRY_DEV_INSTALL: "true"
+    depends_on:
+      - redis-dev
+      - postgres-dev
+    ports:
+      - "8088:8001"
+    volumes:
+      - ./:/code
+
+    environment:
+      - SMARTHOME_BAK_LOG_LEVEL=DEBUG
+      - SMARTHOME_BAK_PG_DSN=postgresql://smarthome:@postgres-dev:5432/smarthome_dev
+      - SMARTHOME_BAK_REDIS_HOST=redis-dev
+      - SMARTHOME_BAK_REDIS_PORT=6379
+    networks:
+      - dev_net
+
+  tests:
+    profiles:
+      - test
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        POETRY_DEV_INSTALL: "true"
+    command: ["poetry", "run", "pytest"]
+    depends_on:
+      - redis-dev
+    environment:
+      - SMARTHOME_BAK_LOG_LEVEL=DEBUG
+      - SMARTHOME_BAK_PG_DSN=sqlite:////code/_local_db/test.db
+      - SMARTHOME_BAK_REDIS_HOST=redis-dev
+      - SMARTHOME_BAK_REDIS_PORT=6379
+    networks:
+      - dev_net
+
+  redis-prod:
+    profiles:
+      - prod
+    image: redis:latest
+    restart: always
+    environment:
+#      - REDIS_PASSWORD=my-password
+      - REDIS_PORT=6379
+      - REDIS_DATABASES=16
+    networks:
+      - prod_net
+
+  redis-dev:
+    profiles:
+      - dev
+      - test
+    image: redis:latest
+    restart: always
+    ports:
+      - "6380:6379"
+    expose:
+      - 6380
+    environment:
+      - REDIS_PORT=6379
+      - REDIS_DATABASES=16
+    networks:
+      - dev_net
+
+  postgres-prod:
+    image: postgres:17
+    profiles:
+      - prod
+    environment:
+      - POSTGRES_DB=smarthome
+      - POSTGRES_USER=smarthome
+      - POSTGRES_PASSWORD=
+    ports:
+      - "5436:5432"
+    networks:
+      - prod_net
+
+  postgres-dev:
+    image: postgres:17
+    profiles:
+      - dev
+    environment:
+      - POSTGRES_DB=smarthome_dev
+      - POSTGRES_USER=smarthome
+      - POSTGRES_PASSWORD=
+    ports:
+      - "5435:5432"
+    networks:
+      - dev_net
+    volumes:
+      - ./_local_db/db:/var/lib/postgresql/data
+
+networks:
+  prod_net:
+    driver: bridge
+  dev_net:
+    driver: bridge

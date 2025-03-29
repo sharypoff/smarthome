@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "smarthome"
+version = "0.1.0"
+description = "Smart Home backend"
+authors = ["Alexey Sharypov <alexey@sharypov.ru>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+fastapi = "^0.111.0"
+uvicorn = "^0.30.1"
+pydantic-settings = "^2.8.1"
+sqlalchemy = "^2.0.40"
+redis = "^5.2.1"
+psycopg2-binary = "^2.9.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+mypy = "^1.15.0"
+pylint = "^3.3.6"
+faker = "^25.8.0"
+pylint-pydantic = "^0.3.2"
+pytest-asyncio = "^0.24.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+help = "poetry run uvicorn smarthome.main:app --reload --port 8000"
+
+[tool.pylint]
+extension-pkg-whitelist = "pydantic"
+exclude-too-few-public-methods="pydantic.*"
+
+[tool.pytest.ini_options]
+addopts = "-vvv -rsxX -l --tb=short --strict-markers --doctest-modules"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+cache_dir = "/tmp/pytest_cache"
+python_files = "test*.py"
+testpaths = ["tests"]
+xfail_strict = "true"
